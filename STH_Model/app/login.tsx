@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, StyleSheet, useWindowDimensions } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useRouter } from 'expo-router';
@@ -10,6 +10,10 @@ export default function LoginScreen() {
   const [hasBiometrics, setHasBiometrics] = useState(false);
   const [hasSavedBio, setHasSavedBio] = useState(false);
   const [storedPin, setStoredPin] = useState<string | null>(null);
+  const { width, height } = useWindowDimensions();
+  const isSmallDevice = width < 375;
+  const isTablet = width >= 768;
+  const styles = makeStyles(width, height, isSmallDevice, isTablet);
 
   useEffect(() => {
     checkBiometrics();
@@ -34,7 +38,6 @@ export default function LoginScreen() {
   }
 
   async function authenticateWithBiometrics() {
-    let attempts=0
     const result = await LocalAuthentication.authenticateAsync({
       promptMessage: "Login with Face ID / Fingerprint",
       disableDeviceFallback: true,
@@ -45,7 +48,6 @@ export default function LoginScreen() {
       console.log("Biometric authentication successful.");
     } else {
       Alert.alert("Biometric authentication failed.", "Please enter your PIN.");
-      attempts+=1;
     }
   }
 
@@ -118,15 +120,63 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8f9fa' },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
-  pinContainer: { flexDirection: 'row', justifyContent: 'center', marginBottom: 20 },
-  pinDot: { width: 12, height: 12, borderRadius: 6, borderWidth: 2, borderColor: '#007bff', margin: 5 },
-  filledDot: { backgroundColor: '#007bff' },
-  numPad: { flexDirection: 'row', flexWrap: 'wrap', width: 220, justifyContent: 'center' },
-  numButton: { width: 60, height: 60, justifyContent: 'center', alignItems: 'center', margin: 5, backgroundColor: '#ddd', borderRadius: 30 },
-  numText: { fontSize: 24, fontWeight: 'bold' },
-  actionButton: { padding: 15, borderRadius: 8, width: 200, alignItems: 'center', marginTop: 10 },
-  actionText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
+const makeStyles = (width: number, height: number, isSmallDevice: boolean, isTablet: boolean) => StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+  },
+  title: {
+    fontSize: isTablet ? 32 : isSmallDevice ? 20 : 24,
+    fontWeight: 'bold',
+    marginBottom: isTablet ? 30 : 20,
+  },
+  pinContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: isTablet ? 30 : 20,
+  },
+  pinDot: {
+    width: isTablet ? 15 : 12,
+    height: isTablet ? 15 : 12,
+    borderRadius: isTablet ? 7.5 : 6,
+    borderWidth: 2,
+    borderColor: '#007bff',
+    margin: isTablet ? 7 : 5,
+  },
+  filledDot: {
+    backgroundColor: '#007bff',
+  },
+  numPad: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    width: isTablet ? 300 : 220,
+    justifyContent: 'center',
+  },
+  numButton: {
+    width: isTablet ? 75 : 60,
+    height: isTablet ? 75 : 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: isTablet ? 7 : 5,
+    backgroundColor: '#f0f0f0',
+    borderRadius: isTablet ? 37.5 : 30,
+  },
+  numText: {
+    fontSize: isTablet ? 28 : 24,
+    fontWeight: 'bold',
+  },
+  actionButton: {
+    padding: isTablet ? 20 : 15,
+    borderRadius: 8,
+    width: isTablet ? 250 : 200,
+    alignItems: 'center',
+    marginTop: isTablet ? 15 : 10,
+  },
+  actionText: {
+    color: 'white',
+    fontSize: isTablet ? 22 : 18,
+    fontWeight: 'bold',
+  },
 });
