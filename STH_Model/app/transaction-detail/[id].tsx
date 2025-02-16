@@ -20,7 +20,7 @@ export default function TransactionDetailScreen() {
   
   const maxAttempts = 3;
 
-  const styles = makeStyles(width, height, isSmallDevice, isTablet);
+  const styles = makeStyles( isSmallDevice, isTablet);
 
   if (!transaction) {
     return (
@@ -30,7 +30,7 @@ export default function TransactionDetailScreen() {
     );
   }
 
-  // 🔐 Try Biometric Authentication
+  // Try Biometric Authentication
   const tryBiometricAuth = async () => {
     if (!bioEnabled || attemptCount >= maxAttempts) {
       setBioEnabled(false);
@@ -66,7 +66,7 @@ export default function TransactionDetailScreen() {
     }
   };
 
-  // 🔓 Authentication and Toggle Handler
+  // Authentication and Toggle Handler
   const authenticateAndToggle = async () => {
     if (amountVisible) {
       setAmountVisible(false);
@@ -82,7 +82,7 @@ export default function TransactionDetailScreen() {
     }
   };
 
-  // 🔢 Handle Passcode Entry
+  // Handle Passcode Entry
   async function handlePasscodeSubmit() {
     const storedPin = await SecureStore.getItemAsync("user_pin");
 
@@ -103,7 +103,7 @@ export default function TransactionDetailScreen() {
     setEnteredPin("");
   };
 
-  // 🔍 Watch PIN length and validate automatically
+  // Watch PIN length and validate automatically
     useEffect(() => {
       if (enteredPin.length === 6) {
         handlePasscodeSubmit();
@@ -150,13 +150,12 @@ export default function TransactionDetailScreen() {
           </Text>
         </TouchableOpacity>
 
-        {/* Reuse the same PIN modal from transaction-history screen */}
+        {/* PIN modal */}
         <Modal visible={passcodeModalVisible} animationType="fade" transparent>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
               <Text style={styles.modalTitle}>Enter Your 6-Digit PIN</Text>
         
-              {/* 🔐 Passcode Indicator */}
               <View style={styles.pinIndicator}>
                 {Array(6)
                   .fill(0)
@@ -165,14 +164,13 @@ export default function TransactionDetailScreen() {
                   ))}
               </View>
         
-              {/* 🔢 Custom Keypad */}
+              {/*  Custom Keypad */}
               <View style={styles.keypad}>
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0, "⌫"].map((key, index) => (
                   <TouchableOpacity
                     key={index}
                     style={[
                       styles.keypadButton,
-                      // Center "0" button
                       key === 0 ? { marginLeft: 70 } : {}
                     ]}
                     onPress={() => {
@@ -188,7 +186,7 @@ export default function TransactionDetailScreen() {
                 ))}
               </View>
         
-              {/* 🚫 Cancel Button */}
+              {/*  Cancel Button */}
               <TouchableOpacity onPress={handleModalCancel} style={styles.cancelButton}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
@@ -200,7 +198,7 @@ export default function TransactionDetailScreen() {
   );
 }
 
-const makeStyles = (width: number, height: number, isSmallDevice: boolean, isTablet: boolean) => StyleSheet.create({
+const makeStyles = (isSmallDevice: boolean, isTablet: boolean) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#fff',

@@ -148,7 +148,7 @@ export default function TransactionHistoryScreen() {
       handlePasscodeSubmit();
     }
   }, [enteredPin]);
-  const styles = makeStyles(width, height, isSmallDevice, isTablet);
+  const styles = makeStyles( isSmallDevice, isTablet);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -271,7 +271,7 @@ export default function TransactionHistoryScreen() {
   );
 }
 
-const makeStyles = (width: number, height: number, isSmallDevice: boolean, isTablet: boolean) => StyleSheet.create({
+const makeStyles = ( isSmallDevice: boolean, isTablet: boolean) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#fff',

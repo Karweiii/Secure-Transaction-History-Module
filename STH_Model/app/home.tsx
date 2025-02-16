@@ -5,8 +5,8 @@ import { useRouter } from "expo-router";
 export default function HomeScreen() {
   const router = useRouter();
   const { width, height } = useWindowDimensions();
-  const isSmallDevice = width < 375; // Check for small devices (e.g., iPhone SE)
-  const isTablet = width >= 768; // Check for tablets
+  const isSmallDevice = width < 375; // 
+  const isTablet = width >= 768; 
 
   const styles = makeStyles(width, height, isSmallDevice, isTablet);
 
@@ -52,8 +52,8 @@ const makeStyles = (width: number, height: number, isSmallDevice: boolean, isTab
       paddingVertical: isTablet ? 20 : isSmallDevice ? 12 : 15,
       paddingHorizontal: isTablet ? 40 : isSmallDevice ? 20 : 30,
       borderRadius: isTablet ? 20 : isSmallDevice ? 10 : 15,
-      elevation: 3, // Shadow for Android
-      shadowColor: "#000", // Shadow for iOS
+      elevation: 3, 
+      shadowColor: "#000", 
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.2,
       shadowRadius: 4,
