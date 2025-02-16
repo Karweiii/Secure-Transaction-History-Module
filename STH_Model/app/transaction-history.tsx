@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect } from "react";
-import { View, FlatList, RefreshControl, Alert, TouchableOpacity, Text, TextInput, Modal, Button, Pressable } from "react-native";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
+import { View, FlatList, RefreshControl, Alert, TouchableOpacity, Text, Modal, Pressable } from "react-native";
 import TransactionItem from "../components/TransactionItem";
 import { transactions as mockTransactions } from "../data/transactions";
 import * as LocalAuthentication from "expo-local-authentication";
@@ -16,11 +16,44 @@ export default function TransactionHistoryScreen() {
   const [bioEnabled, setBioEnabled] = useState(true);
   const [passcodeModalVisible, setPasscodeModalVisible] = useState(false);
   const [enteredPin, setEnteredPin] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const transactionsPerPage = 10;
 
   const router = useRouter();
   const maxAttempts = 3;
 
-  // 🔄 Pull-to-Refresh
+  // Get paginated transactions
+  const paginatedTransactions = useMemo(() => {
+    const startIndex = (currentPage - 1) * transactionsPerPage;
+    const endIndex = startIndex + transactionsPerPage;
+    return transactions.slice(startIndex, endIndex);
+  }, [transactions, currentPage]);
+
+  // Group transactions by date
+  const groupedTransactions = useMemo(() => {
+    return paginatedTransactions.reduce((groups: Record<string, Transaction[]>, transaction) => {
+      const dateKey = new Date(transaction.date).toDateString();
+      if (!groups[dateKey]) groups[dateKey] = [];
+      groups[dateKey].push(transaction);
+      return groups;
+    }, {});
+  }, [paginatedTransactions]);
+
+  // Handle next page
+  const handleNextPage = () => {
+    if (currentPage < Math.ceil(transactions.length / transactionsPerPage)) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Handle previous page
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // Pull-to-refresh
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => {
@@ -29,7 +62,7 @@ export default function TransactionHistoryScreen() {
     }, 1000);
   }, []);
 
-  // 🔐 Try Biometric Authentication
+  // Biometric authentication
   const tryBiometricAuth = async () => {
     if (!bioEnabled || attemptCount >= maxAttempts) {
       setBioEnabled(false);
@@ -45,11 +78,11 @@ export default function TransactionHistoryScreen() {
 
       if (biometricAuth.success) {
         setAmountVisible(true);
-        setAttemptCount(0);  // Reset attempts on success
+        setAttemptCount(0);
         return true;
       }
-      
-      setAttemptCount(prev => prev + 1);  // Increment attempt count
+
+      setAttemptCount(prev => prev + 1);
       if (attemptCount + 1 >= maxAttempts) {
         Alert.alert(
           "Maximum Attempts Reached",
@@ -65,7 +98,7 @@ export default function TransactionHistoryScreen() {
     }
   };
 
-  // 🔓 Authentication and Toggle Handler
+  // Toggle amount visibility
   const authenticateAndToggle = async () => {
     if (amountVisible) {
       setAmountVisible(false);
@@ -74,17 +107,15 @@ export default function TransactionHistoryScreen() {
     }
 
     const authSuccess = await tryBiometricAuth();
-    
     if (!authSuccess) {
       setBioEnabled(false);
       setPasscodeModalVisible(true);
     }
   };
 
-  // 🔢 Handle Passcode Entry
-  async function handlePasscodeSubmit() {
+  // Handle passcode submission
+  const handlePasscodeSubmit = async () => {
     const storedPin = await SecureStore.getItemAsync("user_pin");
-
     if (enteredPin === storedPin) {
       setAmountVisible(true);
       setAttemptCount(0);
@@ -95,41 +126,25 @@ export default function TransactionHistoryScreen() {
       Alert.alert("Incorrect Passcode", "Please try again.");
       setEnteredPin("");
     }
-  }
+  };
 
-  // 🚫 Handle Modal Cancel
+  // Handle modal cancel
   const handleModalCancel = () => {
     setPasscodeModalVisible(false);
     setEnteredPin("");
   };
 
-  // 🔗 Navigate to Detail Screen
+  // Navigate to transaction detail
   const navigateToTransactionDetail = (transactionId: string) => {
     router.push(`/transaction-detail/${transactionId}`);
   };
 
-  function sortTransactions(data: Transaction[]) {
-    return [...data].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }
-
-  // 🔄 Group Transactions by Date
-  function groupTransactionsByDate(data: Transaction[]) {
-    return data.reduce((groups: Record<string, Transaction[]>, transaction) => {
-      const dateKey = new Date(transaction.date).toDateString(); // Convert to readable format
-      if (!groups[dateKey]) groups[dateKey] = [];
-      groups[dateKey].push(transaction);
-      return groups;
-    }, {});
-  }
-
-  // 🔍 Watch PIN length and validate automatically
+  // Watch PIN length and validate automatically
   useEffect(() => {
     if (enteredPin.length === 6) {
       handlePasscodeSubmit();
     }
   }, [enteredPin]);
-
-  const groupedTransactions = groupTransactionsByDate(transactions);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -137,31 +152,23 @@ export default function TransactionHistoryScreen() {
         <Pressable onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.headerButtonText}>{"< Back"}</Text>
         </Pressable>
-        <TouchableOpacity
-          onPress={authenticateAndToggle}
-          style={styles.backButton}
-        >
+        <TouchableOpacity onPress={authenticateAndToggle} style={styles.backButton}>
           <Text style={styles.headerButtonText}>
             {amountVisible ? "Hide Amount" : "Reveal Amount"}
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* 📜 Title */}
       <Text style={{ fontSize: 24, fontWeight: "bold", marginTop: 20, textAlign: "center" }}>
         Transaction History
       </Text>
 
-      {/* 📜 Transaction List */}
       <FlatList
         data={Object.keys(groupedTransactions)}
         keyExtractor={(date) => date}
         renderItem={({ item: date }) => (
           <View>
-            {/* 🗓 Date Header */}
             <Text style={styles.dateHeader}>{date}</Text>
-            
-            {/* 📝 Transactions for this date */}
             {groupedTransactions[date].map((transaction) => (
               <TransactionItem
                 key={transaction.id}
@@ -176,52 +183,50 @@ export default function TransactionHistoryScreen() {
         contentContainerStyle={{ paddingTop: 10 }}
       />
 
-      {/* 🔢 Improved Passcode Modal */}
-<Modal visible={passcodeModalVisible} animationType="fade" transparent>
-  <View style={styles.modalOverlay}>
-    <View style={styles.modalContainer}>
-      <Text style={styles.modalTitle}>Enter Your 6-Digit PIN</Text>
-
-      {/* 🔐 Passcode Indicator */}
-      <View style={styles.pinIndicator}>
-        {Array(6)
-          .fill(0)
-          .map((_, index) => (
-            <View key={index} style={[styles.pinDot, enteredPin.length > index && styles.filledDot]} />
-          ))}
+      <View style={styles.paginationContainer}>
+        <TouchableOpacity onPress={handlePreviousPage} disabled={currentPage === 1}>
+          <Text style={[styles.paginationButton, currentPage === 1 && styles.disabledButton]}>Previous</Text>
+        </TouchableOpacity>
+        <Text style={styles.paginationText}>Page {currentPage}</Text>
+        <TouchableOpacity onPress={handleNextPage} disabled={currentPage === Math.ceil(transactions.length / transactionsPerPage)}>
+          <Text style={[styles.paginationButton, currentPage === Math.ceil(transactions.length / transactionsPerPage) && styles.disabledButton]}>Next</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* 🔢 Custom Keypad */}
-      <View style={styles.keypad}>
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0, "⌫"].map((key, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[
-              styles.keypadButton,
-              // Center "0" button
-              key === 0 ? { marginLeft: 70 } : {}
-            ]}
-            onPress={() => {
-              if (key === "⌫") {
-                setEnteredPin(enteredPin.slice(0, -1));
-              } else if (enteredPin.length < 6) {
-                setEnteredPin(enteredPin + key.toString());
-              }
-            }}
-          >
-            <Text style={styles.keypadText}>{key}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* 🚫 Cancel Button */}
-      <TouchableOpacity onPress={handleModalCancel} style={styles.cancelButton}>
-        <Text style={styles.cancelButtonText}>Cancel</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-</Modal>
-
+      <Modal visible={passcodeModalVisible} animationType="fade" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Enter Your 6-Digit PIN</Text>
+            <View style={styles.pinIndicator}>
+              {Array(6)
+                .fill(0)
+                .map((_, index) => (
+                  <View key={index} style={[styles.pinDot, enteredPin.length > index && styles.filledDot]} />
+                ))}
+            </View>
+            <View style={styles.keypad}>
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0, "⌫"].map((key, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[styles.keypadButton, key === 0 ? { marginLeft: 70 } : {}]}
+                  onPress={() => {
+                    if (key === "⌫") {
+                      setEnteredPin(enteredPin.slice(0, -1));
+                    } else if (enteredPin.length < 6) {
+                      setEnteredPin(enteredPin + key.toString());
+                    }
+                  }}
+                >
+                  <Text style={styles.keypadText}>{key}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TouchableOpacity onPress={handleModalCancel} style={styles.cancelButton}>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -318,8 +323,24 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontWeight: 'bold',
   },
-  revealButton: {
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  paginationButton: {
+    fontSize: 16,
+    color: '#007AFF',
+    fontWeight: 'bold',
+  },
+  disabledButton: {
+    color: '#ccc',
+  },
+  paginationText: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
-

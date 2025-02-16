@@ -198,6 +198,7 @@ const styles = StyleSheet.create({
     height: 50,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',

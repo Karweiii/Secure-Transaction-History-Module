@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
+import { router } from 'expo-router';
 
-export default function SetPinScreen({ navigation }: { navigation: any }) {
+export default function SetPinScreen() {
   const [pin, setPin] = useState('');
 
   async function handlePinPress(value: string) {
@@ -12,7 +13,7 @@ export default function SetPinScreen({ navigation }: { navigation: any }) {
     if (pin.length === 5) {
       await SecureStore.setItemAsync('user_pin', pin + value);
       Alert.alert("PIN Set", "Your PIN has been saved.");
-      navigation.replace('/Screens/LoginScreen');
+      router.replace('/login');
     }
   }
 
