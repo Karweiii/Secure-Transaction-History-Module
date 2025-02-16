@@ -1,33 +1,66 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { Transaction } from "../models/Transaction";
+// TransactionItem.tsx
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ViewStyle, StyleProp } from 'react-native';
+import { Transaction } from '../models/Transaction';
 
-interface TransactionItemProps {
+export interface TransactionItemProps {
   transaction: Transaction;
   onPress: () => void;
   amountVisible: boolean;
+  style?: StyleProp<ViewStyle>;  // Add style prop to the interface
 }
 
-export default function TransactionItem({ transaction, onPress,amountVisible }: TransactionItemProps) {
+const TransactionItem: React.FC<TransactionItemProps> = ({ 
+  transaction, 
+  onPress, 
+  amountVisible,
+  style 
+}) => {
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress}>
-      <View>
-        <Text style={styles.description}>{transaction.description}</Text>
-        <Text style={styles.date}>{new Date(transaction.date).toDateString()}</Text>
+    <TouchableOpacity onPress={onPress} style={[styles.container, style]}>
+      <View style={styles.content}>
+        <Text style={styles.title}>{transaction.description}</Text>
+        {amountVisible ? (
+          <Text style={[
+            styles.amount,
+            { color: transaction.type ==="credit" ? '#2E8B57' : '#DC143C' }
+          ]}>
+            {transaction.type ==="credit"
+              ? `+ RM ${transaction.amount.toFixed(2)}` 
+              : `- RM ${Math.abs(transaction.amount).toFixed(2)}`}
+          </Text>
+        ) : (
+          <Text style={[styles.hiddenAmount,{color: transaction.type ==="credit" ? '#2E8B57' : '#DC143C'}]}>****</Text>
+        )}
       </View>
-      <Text style={[styles.amount, transaction.type === "credit" ? styles.credit : styles.debit]}>
-        {amountVisible ? `${transaction.type==="credit"? "+":"-"}$${transaction.amount.toFixed(2)}` : "****"}
-      </Text>
-
     </TouchableOpacity>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  container: { flexDirection: "row", justifyContent: "space-between", padding: 15, borderBottomWidth: 1, borderBottomColor: "#ccc" },
-  description: { fontSize: 16, fontWeight: "bold" },
-  date: { fontSize: 12, color: "#666" },
-  amount: { fontSize: 16, fontWeight: "bold" },
-  credit: { color: "green" },
-  debit: { color: "red" },
+  container: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  content: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 16,
+    flex: 1,
+    marginRight: 16,
+  },
+  amount: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  hiddenAmount: {
+    fontSize: 16,
+    color: '#666',
+  },
 });
+
+export default TransactionItem;

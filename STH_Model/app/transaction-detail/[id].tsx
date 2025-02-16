@@ -1,5 +1,5 @@
-import React, { useState,useEffect } from "react";
-import { View, Text, StyleSheet, Alert, SafeAreaView, Pressable, TouchableOpacity, Modal } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, Alert, SafeAreaView, Pressable, TouchableOpacity, Modal, useWindowDimensions, Platform, StatusBar } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { transactions } from "@/data/transactions";
 import * as LocalAuthentication from "expo-local-authentication";
@@ -9,6 +9,9 @@ export default function TransactionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const transaction = transactions.find((t) => t.id === id);
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
+  const isSmallDevice = width < 375;
+  const isTablet = width >= 768;
   const [amountVisible, setAmountVisible] = useState(false);
   const [bioEnabled, setBioEnabled] = useState(true);
   const [attemptCount, setAttemptCount] = useState(0);
@@ -17,11 +20,13 @@ export default function TransactionDetailScreen() {
   
   const maxAttempts = 3;
 
+  const styles = makeStyles(width, height, isSmallDevice, isTablet);
+
   if (!transaction) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
         <Text style={styles.errorText}>Transaction not found!</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -106,28 +111,34 @@ export default function TransactionDetailScreen() {
     }, [enteredPin]);
 
   return (
-    <View style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
+        <Pressable 
+          onPress={() => router.back()} 
+          style={styles.backButton}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
           <Text style={styles.backButtonText}>{"< Back"}</Text>
         </Pressable>
       </View>
       <View style={styles.container}>
         <Text style={styles.title}>Transaction Details</Text>
-        <Text style={[styles.title, { 
-          color: transaction.type === "credit" ? "green" : "red", 
-          fontSize: 30 
+        <Text style={[styles.amountText, { 
+          color: transaction.type === "credit" ? "#2E8B57" : "#DC143C"
         }]}>
           {transaction.type === "credit" ? "+" : "-"}
           {amountVisible ? `$${transaction.amount}` : "$****"}
         </Text>
-        <View style={styles.detailBox}>
-          <Text style={styles.label}>Description:</Text>
-          <Text style={styles.value}>{transaction.description}</Text>
-        </View>
-        <View style={styles.detailBox}>
-          <Text style={styles.label}>Date:</Text>
-          <Text style={styles.value}>{new Date(transaction.date).toDateString()}</Text>
+        
+        <View style={styles.detailsContainer}>
+          <View style={styles.detailBox}>
+            <Text style={styles.label}>Description:</Text>
+            <Text style={styles.value}>{transaction.description}</Text>
+          </View>
+          <View style={styles.detailBox}>
+            <Text style={styles.label}>Date:</Text>
+            <Text style={styles.value}>{new Date(transaction.date).toDateString()}</Text>
+          </View>
         </View>
         
         <TouchableOpacity 
@@ -185,57 +196,91 @@ export default function TransactionDetailScreen() {
           </View>
         </Modal>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (width: number, height: number, isSmallDevice: boolean, isTablet: boolean) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   header: {
-    height: 50,
+    height: isTablet ? 60 : 50,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 10,
+    paddingHorizontal: isTablet ? 20 : 10,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
   backButton: {
-    padding: 10,
+    padding: isSmallDevice ? 8 : 10,
   },
   backButtonText: {
-    fontSize: 18,
+    fontSize: isTablet ? 20 : isSmallDevice ? 16 : 18,
     color: '#007AFF',
     fontWeight: 'bold',
   },
   container: {
     flex: 1,
-    marginTop:50,
-    padding: 20,
+    marginTop: isTablet ? 60 : 50,
+    padding: isTablet ? 30 : 20,
     backgroundColor: "#fff",
     alignItems: "center",
   },
-  title: { fontSize: 24, fontWeight: "bold", marginBottom: 20 },
-  detailBox: { flexDirection: "row", justifyContent: "space-between", width: "100%", marginBottom: 10 },
-  label: { fontSize: 18, fontWeight: "bold", color: "#555" },
-  value: { fontSize: 18, color: "#000" },
-  credit: { color: "green" },
-  debit: { color: "red" },
-  errorText: { fontSize: 20, color: "red" },
+  title: {
+    fontSize: isTablet ? 28 : isSmallDevice ? 20 : 24,
+    fontWeight: "bold",
+    marginBottom: isTablet ? 25 : 20,
+  },
+  amountText: {
+    fontSize: isTablet ? 36 : isSmallDevice ? 26 : 30,
+    fontWeight: "bold",
+    marginBottom: isTablet ? 30 : 20,
+  },
+  detailsContainer: {
+    width: "100%",
+    maxWidth: isTablet ? 600 : 450,
+    marginBottom: isTablet ? 30 : 20,
+  },
+  detailBox: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    marginBottom: isTablet ? 15 : 10,
+    padding: isTablet ? 15 : 10,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+  },
+  label: {
+    fontSize: isTablet ? 20 : isSmallDevice ? 16 : 18,
+    fontWeight: "bold",
+    color: "#555",
+  },
+  value: {
+    fontSize: isTablet ? 20 : isSmallDevice ? 16 : 18,
+    color: "#000",
+    flex: 1,
+    textAlign: 'right',
+    marginLeft: 10,
+  },
+  errorText: {
+    fontSize: isTablet ? 24 : isSmallDevice ? 18 : 20,
+    color: "red",
+    textAlign: 'center',
+  },
   revealButton: {
     backgroundColor: '#007AFF',
-    padding: 15,
+    padding: isTablet ? 18 : 15,
     borderRadius: 10,
-    marginTop: 20,
-    width: '80%',
+    marginTop: isTablet ? 25 : 20,
+    width: isTablet ? '60%' : '80%',
     alignItems: 'center',
   },
   revealButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: isTablet ? 20 : isSmallDevice ? 14 : 16,
     fontWeight: 'bold',
   },
   modalOverlay: {
@@ -245,40 +290,40 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContainer: {
-    width: 320,
+    width: isTablet ? 400 : 320,
     backgroundColor: "white",
     borderRadius: 15,
-    padding: 20,
+    padding: isTablet ? 30 : 20,
     alignItems: "center",
     elevation: 5,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: isTablet ? 24 : 20,
     fontWeight: "bold",
-    marginBottom: 15,
+    marginBottom: isTablet ? 20 : 15,
   },
   keypad: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
-    width: 240,
+    width: isTablet ? 300 : 240,
   },
   keypadButton: {
-    width: 60,
-    height: 60,
-    margin: 5,
+    width: isTablet ? 75 : 60,
+    height: isTablet ? 75 : 60,
+    margin: isTablet ? 7 : 5,
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 30,
+    borderRadius: isTablet ? 37.5 : 30,
     backgroundColor: "#f0f0f0",
   },
   keypadText: {
-    fontSize: 22,
+    fontSize: isTablet ? 26 : 22,
     fontWeight: "bold",
   },
   cancelButton: {
-    marginTop: 15,
-    padding: 10,
+    marginTop: isTablet ? 20 : 15,
+    padding: isTablet ? 15 : 10,
     width: "80%",
     borderRadius: 8,
     alignItems: "center",
@@ -286,21 +331,21 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     color: "white",
-    fontSize: 16,
+    fontSize: isTablet ? 20 : 16,
     fontWeight: "bold",
   },
   pinIndicator: {
     flexDirection: "row",
     justifyContent: "center",
-    marginBottom: 20,
+    marginBottom: isTablet ? 25 : 20,
   },
   pinDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: isTablet ? 15 : 12,
+    height: isTablet ? 15 : 12,
+    borderRadius: isTablet ? 7.5 : 6,
     borderWidth: 2,
     borderColor: "#007bff",
-    margin: 5,
+    margin: isTablet ? 7 : 5,
   },
   filledDot: {
     backgroundColor: "#007bff",
