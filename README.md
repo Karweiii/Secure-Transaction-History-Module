@@ -11,15 +11,19 @@ Before you begin, ensure you have the following installed:
 ## Setup Instructions
 
 1. Clone the repository
+   ``
    git clone [repository-url]
    cd STH_Model
+   ``
 
-2. Install dependencies
+3. Install dependencies
+   ``
    npm install
-
-3. Start the development server
+   ``
+5. Start the development server
+   ``
    npx expo start
-
+   ``
 ## Development Options
 
 You can run the app in several ways:
