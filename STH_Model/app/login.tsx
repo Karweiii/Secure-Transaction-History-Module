@@ -7,9 +7,12 @@ import { useRouter } from 'expo-router';
 export default function LoginScreen() {
   const router = useRouter();
   const [pin, setPin] = useState('');
+  const [hasBiometrics, setHasBiometrics] = useState(false);
+  const [hasSavedBio, setHasSavedBio] = useState(false);
   const [storedPin, setStoredPin] = useState<string | null>(null);
 
   useEffect(() => {
+    checkBiometrics();
     checkStoredPin();
   }, []);
 
@@ -17,13 +20,21 @@ export default function LoginScreen() {
     const savedPin = await SecureStore.getItemAsync('user_pin');
     if (savedPin) {
       setStoredPin(savedPin);
-      authenticateWithBiometrics();
+      if(hasBiometrics && hasSavedBio) {
+        authenticateWithBiometrics();
+      }
     } else {
       router.replace('/setpin');
     }
   }
 
+  async function checkBiometrics() {
+    setHasBiometrics(await LocalAuthentication.hasHardwareAsync());
+    setHasSavedBio(await LocalAuthentication.isEnrolledAsync());
+  }
+
   async function authenticateWithBiometrics() {
+    let attempts=0
     const result = await LocalAuthentication.authenticateAsync({
       promptMessage: "Login with Face ID / Fingerprint",
       disableDeviceFallback: true,
@@ -33,7 +44,8 @@ export default function LoginScreen() {
       router.replace('/home');
       console.log("Biometric authentication successful.");
     } else {
-      Alert.alert("Biometric authentication failed.");
+      Alert.alert("Biometric authentication failed.", "Please enter your PIN.");
+      attempts+=1;
     }
   }
 
@@ -88,7 +100,14 @@ export default function LoginScreen() {
       </View>
 
       {/* Biometrics & Reset Button */}
-      <TouchableOpacity onPress={authenticateWithBiometrics} style={[styles.actionButton, { backgroundColor: '#28a745' }]}>
+      <TouchableOpacity 
+        onPress={authenticateWithBiometrics} 
+        style={[
+          styles.actionButton, 
+          { backgroundColor: (hasBiometrics && hasSavedBio) ? '#28a745' : '#999999' }
+        ]}
+        disabled={!hasBiometrics || !hasSavedBio}
+      >
         <Text style={styles.actionText}>Use Biometrics</Text>
       </TouchableOpacity>
 

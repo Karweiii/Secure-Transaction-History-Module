@@ -1,50 +1,47 @@
-# Welcome to your Expo app 👋
+# Secure Transaction History Module 🔐
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## Overview
 
-## Get started
+### App Directory (`/app`)
 
-1. Install dependencies
+#### login.tsx
+- Main authentication screen
+- Manages biometric and PIN authentication
+- Includes custom PIN pad interface
+- Handles authentication attempts limits
+- Provides biometric and PIN fallback options
 
-   ```bash
-   npm install
-   ```
+#### setpin.tsx
+- Initial PIN setup screen for first-time users
+- Creates and stores secure 6-digit PIN
+- Uses SecureStore for PIN storage
+- Redirects to login after successful setup
 
-2. Start the app
+#### home.tsx
+- Landing page after successful authentication
+- Simple welcome interface
+- Navigation to transaction history
+- Responsive layout for all device sizes
 
-   ```bash
-    npx expo start
-   ```
+#### transaction-history.tsx
+- Displays chronological transaction list
+- Implements secure amount concealment
+- Features pull-to-refresh updates
+- Pagination with 10 items per page
+- Groups transactions by date
+- Responsive design for tablet/phone
 
-In the output, you'll find options to open the app in a
+#### transaction-detail/[id].tsx
+- Individual transaction detail view
+- Secure amount reveal functionality
+- Detailed transaction information
+- Maintains consistent security patterns
+- Responsive layout implementation
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### Security Implementation
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+The module implements a multi-layer security approach:
+1. Biometric authentication (primary)
+2. PIN fallback (secondary)
+3. Maximum attempt limits
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
